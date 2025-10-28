@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from time import time
+from typing import List
 
 import pytest
 
@@ -40,8 +41,11 @@ class TestLedgerService:
         ledger_service.process_transaction(
             "acc1", TransactionType.DEPOSIT, 100.0, "Test deposit 3"
         )
+        ledger_service.process_transaction(
+            "acc2", TransactionType.DEPOSIT, 100.0, "Test deposit 3"
+        ) # should not be in acc1's ledger as it is a different account
 
-        transactions = ledger_service.list_transactions("acc1")
+        transactions: List[Transaction] = ledger_service.list_transactions("acc1")
         transaction1: Transaction = transactions[0]
         transaction2: Transaction = transactions[1]
 
@@ -95,42 +99,11 @@ class TestLedgerService:
         with pytest.raises(ValueError, match="Transaction amount must be positive"):
             ledger_service.process_transaction("acc1", TransactionType.DEPOSIT, -20.0)
 
-    def test_get_balance_returns_correct_amount(
-        self, ledger_service: LedgerService
-    ) -> None:
-        ledger_service.process_transaction("acc1", TransactionType.DEPOSIT, 123.45)
-
-        balance = ledger_service.get_balance("acc1")
-        assert balance == 123.45
-
     def test_get_balance_for_nonexistent_account_raises_error(
         self, ledger_service: LedgerService
     ) -> None:
         with pytest.raises(ValueError, match="Account acc1 does not exist"):
             ledger_service.get_balance("acc1")
-
-    def test_list_transactions_returns_correct_list(
-        self, ledger_service: LedgerService
-    ) -> None:
-        ledger_service.process_transaction(
-            "acc1", TransactionType.DEPOSIT, 100.0, "First"
-        )
-        ledger_service.process_transaction(
-            "acc1", TransactionType.WITHDRAWAL, 30.0, "Second"
-        )
-        ledger_service.process_transaction(
-            "acc1", TransactionType.DEPOSIT, 50.0, "Third"
-        )
-
-        transactions = ledger_service.list_transactions("acc1")
-
-        assert len(transactions) == 3
-        assert transactions[0].description == "First"
-        assert transactions[0].amount == 100.0
-        assert transactions[0].type == TransactionType.DEPOSIT
-        assert transactions[0].id == f"{hash('acc1')}_1"
-        assert transactions[1].id == f"{hash('acc1')}_2"
-        assert transactions[1].description == "Second"
 
     def test_list_transactions_for_nonexistent_account_raises_error(
         self, ledger_service: LedgerService

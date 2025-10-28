@@ -23,10 +23,6 @@ class LedgerService:
                 Withdrawals require the account to already exist and sufficient funds in it.
         get_balance: Get current account balance (raises ValueError if not found).
         list_transactions: Get transaction history (raises ValueError if not found).
-
-    Attributes:
-        _transactions: Account ID -> transaction list mapping.
-        _balances: Account ID -> balance mapping.
     """
 
     def __init__(self) -> None:
@@ -40,15 +36,18 @@ class LedgerService:
         amount: float,
         description: str | None = None,
     ) -> None:
+        # Parsing
         current_timestamp = datetime.fromtimestamp(time())
         transaction = self._parse_transaction_request(
             account_id, transaction_type, amount, current_timestamp, description
         )
 
+        # Validation
         self._validate_transaction_amount(transaction.amount)
         if transaction.type == TransactionType.WITHDRAWAL:
             self._validate_withdrawal_is_possible(transaction)
 
+        # Record transaction
         self._setup_account_if_not_exists(transaction.account_id)
         self._record_transaction(transaction)
 
@@ -60,7 +59,6 @@ class LedgerService:
     def list_transactions(self, account_id: str) -> List[Transaction]:
         if account_id not in self._transactions:
             raise ValueError(f"Account {account_id} does not exist.")
-
         return self._transactions[account_id]
 
     def _parse_transaction_request(
@@ -87,6 +85,7 @@ class LedgerService:
     def _setup_account_if_not_exists(self, account_id: str) -> None:
         if not account_id in self._transactions:
             self._transactions[account_id] = []
+        # In practice if one doesn't exist, the other also won't, but this is more sturdy
         if not account_id in self._balances:
             self._balances[account_id] = 0.0
 
@@ -95,8 +94,10 @@ class LedgerService:
 
         if transaction.type == TransactionType.DEPOSIT:
             self._balances[transaction.account_id] += transaction.amount
-        else:
+        elif transaction.type == TransactionType.WITHDRAWAL:
             self._balances[transaction.account_id] -= transaction.amount
+        else:
+            raise ValueError(f"Unknown transaction type: {transaction.type}")
 
     def _validate_transaction_amount(self, amount: float) -> None:
         if amount <= 0:

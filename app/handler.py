@@ -10,7 +10,7 @@ from .tinyLedger import InsufficientFundsError, LedgerService
 
 class TransactionRequest(BaseModel):
     amount: float
-    type: TransactionType  # "deposit"/"withdrawal"
+    type: TransactionType  # "deposit" | "withdrawal"
     description: str | None = None
 
 
@@ -31,7 +31,6 @@ class LedgerHandler:
         self.ledgerService = LedgerService()
         self.router = APIRouter()
 
-        # TODO validation of transaction type -> test with different things in transaction type and check that it fails as it should
         @self.router.post(
             "/transactions/{account_id}",
             response_model=TransactionResponse,

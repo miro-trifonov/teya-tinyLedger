@@ -3,8 +3,9 @@
 This is a small ledger web API implemented in Python using FastAPI. It supports recording deposits and withdrawals, viewing the current balance, and fetching the transaction history. Data is kept in-memory for simplicity.
 
 # Assumptions
-- Withdrawals that would make the balance negative are rejected (insufficient funds). This results in an exception. Returning and ok status with a rejected operation message and handling in the front end would also be a valid design choice
-- The ledger should support multiple accounts (this was unclear from the project description, I opted for the more comprehensive option)
+- The ledger supports multiple accounts (this was unclear from the project description, I opted for the more comprehensive option)
+- Withdrawals that would make the balance negative are rejected (insufficient funds) and result in an exception. (Returning an ok status with a rejected operation message and handling in the front end would also be a valid design choice)
+- It is possible to deposit to an account without explicitly creating it (and this will create the account internally). Withdraws result in an error if the account doesn't exist as it doesn't make sense to withdraw without having an account.
 
 # Out of scope
 - Transaction filtering on getTransactions - e.q. based on date, or transaction type
@@ -12,27 +13,43 @@ This is a small ledger web API implemented in Python using FastAPI. It supports 
 - Atomic operations/recovery if something goes wrong halfway
 - Logging
 - Integration testing and fastAPI calls tests
-- Dockerisation and making sure it works on other machines. Testing has been done on a windows machine and not verified in other environments
+- Dockerisation and making sure it works on other machines. Local testing has been done on a windows machine and is not verified in other environments.
 
 
-# API usage
+# Usage
 
-Run locally
-Install dependencies:
 
+1. Install local dependencies
 ```
 python -m pip install -r requirements.txt
 ```
 
-Start the app (uvicorn):
+2. Run tests with:
+
+```
+ python -m pytest -v
+```
+
+3. Code formatting (with black):
+
+
+```
+black .
+```
+
+### API Usage
+
+1. Start the app (uvicorn):
 
 ```
 python -m uvicorn app.handler:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open the docs: http://127.0.0.1:8000/docs
+2. Open the local endpoint: http://127.0.0.1:8000/docs
 
-## Endpoints
+3. Or use CLI commands:
+
+### CLI commands
 
 1) Create transaction
 
@@ -107,20 +124,4 @@ curl "http://127.0.0.1:8000/balance/acc1"
 
 ```
 curl "http://127.0.0.1:8000/transactions/acc1"
-```
-
-Tests
-
-Run tests with:
-
-```
-pytest -q
-```
-
-## Code formatting (with black)
-
-- In your virtual environment:
-
-```
-black .
 ```
